@@ -4,9 +4,6 @@ An agent that climbs the mountain in *Getting Over It with Bennett Foddy*.
 
 https://github.com/user-attachments/assets/a26f1984-b2df-40fd-8574-678081164b4c
 
-<sub>If the player above does not appear, watch
-<a href="docs/demo.mp4">docs/demo.mp4</a> directly.</sub>
-
 A BepInEx plugin turns the unmodified game into a steppable environment — exact
 state save and restore, lockstep physics, mouse input injected at the driver
 level. Everything else talks to it over a socket.
