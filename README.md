@@ -1,4 +1,4 @@
-# Getting Over It, by machine
+# Getting Over It, reinforcement learning agent
 
 An agent that climbs the mountain in *Getting Over It with Bennett Foddy*.
 
