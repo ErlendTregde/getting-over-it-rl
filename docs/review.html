@@ -1,0 +1,257 @@
+<title>Sixty Hours at the Wall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground:   #f3f5f9;
+    --surface:  #ffffff;
+    --ink:      #14181f;
+    --ink-2:    #4a5364;
+    --ink-3:    #7c8598;
+    --rule:     #d7dce6;
+    --accent:   #c98a2e;
+    --accent-2: #a56f1f;
+    --bad:      #b4433a;
+    --good:     #2f7a4f;
+    --code-bg:  #e9edf4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:   #0b0e14;
+      --surface:  #121722;
+      --ink:      #e6ebf5;
+      --ink-2:    #aab3c4;
+      --ink-3:    #6f7a90;
+      --rule:     #232a38;
+      --accent:   #f0a64b;
+      --accent-2: #ffc474;
+      --bad:      #e0716a;
+      --good:     #5cb882;
+      --code-bg:  #171d29;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:   #0b0e14;
+    --surface:  #121722;
+    --ink:      #e6ebf5;
+    --ink-2:    #aab3c4;
+    --ink-3:    #6f7a90;
+    --rule:     #232a38;
+    --accent:   #f0a64b;
+    --accent-2: #ffc474;
+    --bad:      #e0716a;
+    --good:     #5cb882;
+    --code-bg:  #171d29;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 72ch; margin: 0 auto; padding: 56px 24px 96px; }
+
+  header { padding-bottom: 28px; border-bottom: 1px solid var(--rule); margin-bottom: 40px; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-3); margin: 0 0 14px;
+  }
+  h1 {
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 600; font-size: 38px; line-height: 1.12;
+    letter-spacing: -0.01em; margin: 0 0 16px; text-wrap: balance;
+  }
+  .thesis { font-size: 18px; color: var(--ink-2); margin: 0; max-width: 60ch; text-wrap: balance; }
+
+  h2 {
+    font-size: 13px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase;
+    color: var(--ink-3); margin: 48px 0 16px; padding-top: 24px; border-top: 1px solid var(--rule);
+  }
+  h3 { font-size: 17px; font-weight: 600; margin: 26px 0 8px; text-wrap: balance; }
+  p { margin: 0 0 14px; max-width: 66ch; }
+  strong { font-weight: 600; }
+  code, .mono {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.92em;
+  }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+
+  /* the numbers that frame everything */
+  .strip {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+    background: var(--rule); border: 1px solid var(--rule);
+    margin: 0 0 8px;
+  }
+  .strip > div { background: var(--surface); padding: 16px 18px; }
+  .strip .n {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 26px; font-weight: 500; line-height: 1.1;
+    font-variant-numeric: tabular-nums; color: var(--ink);
+  }
+  .strip .n.hot { color: var(--accent); }
+  .strip .l { font-size: 12px; color: var(--ink-3); margin-top: 6px; letter-spacing: 0.02em; }
+  @media (max-width: 640px) { .strip { grid-template-columns: repeat(2, 1fr); } }
+
+  table { width: 100%; border-collapse: collapse; font-size: 15px; margin: 8px 0 18px; }
+  .tablewrap { overflow-x: auto; }
+  th, td { text-align: left; padding: 9px 12px 9px 0; vertical-align: top; border-bottom: 1px solid var(--rule); }
+  th { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+  td:first-child { white-space: nowrap; font-weight: 500; }
+  td .mono { color: var(--ink-2); }
+  .bad { color: var(--bad); font-weight: 500; }
+  .good { color: var(--good); font-weight: 500; }
+
+  /* the wall */
+  figure { margin: 22px 0 10px; }
+  figure svg { width: 100%; height: auto; display: block; }
+  figcaption { font-size: 13px; color: var(--ink-3); margin-top: 8px; max-width: 66ch; }
+
+  ol, ul { padding-left: 22px; margin: 0 0 14px; }
+  li { margin-bottom: 8px; max-width: 64ch; }
+
+  .opt { border-left: 3px solid var(--rule); padding: 2px 0 2px 18px; margin: 0 0 22px; }
+  .opt.pick { border-left-color: var(--accent); }
+  .opt h3 { margin-top: 0; }
+  .opt .meta {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px; color: var(--ink-3); letter-spacing: 0.04em; margin-bottom: 8px;
+  }
+  .verdict {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    padding: 18px 22px; margin: 26px 0 0;
+  }
+  .verdict p:last-child { margin-bottom: 0; }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Getting Over It &middot; RL agent &middot; project review &middot; 2 September 2026</p>
+  <h1>Sixty Hours at the Wall</h1>
+  <p class="thesis">The agent has had more practice than a human needs to finish the game, and it has never once completed the one move that blocks it. More of the same training will not change that. Here is why, what was wrong, and what to do instead.</p>
+</header>
+
+<div class="strip">
+  <div><div class="n">6,495,500</div><div class="l">env steps trained</div></div>
+  <div><div class="n">60 h</div><div class="l">of game time (humans: 5&ndash;20 h)</div></div>
+  <div><div class="n">cp010</div><div class="l">honest reach from the bottom, best policy, 6/6</div></div>
+  <div><div class="n hot">0</div><div class="l">completions of the lift at arc 80, in 30+ measured runs</div></div>
+</div>
+<p style="font-size:13px;color:var(--ink-3);margin-top:8px">Reach is by route projection &mdash; the third metric, after two that lied. Nothing has reached cp011 under any of the three.</p>
+
+<h2>What the agent is</h2>
+<p>Soft Actor-Critic with a 44 &rarr; 256 &rarr; 256 &rarr; 2 policy: 20 state values and 24 raycasts in, a mouse delta out, scaled by 13.8. Reward is arc gained along the authored route, monotonic, plus a bonus for touching the next rung. A forward curriculum walks a head rung up a ladder of 38 hand-placed checkpoints; 40% of episodes start elsewhere on the ladder, weighted toward the weakest rungs. The game runs lockstepped at 120&nbsp;Hz, four ticks per decision, one instance.</p>
+
+<h2>What was tried, and what each did</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>approach</th><th>result</th></tr></thead>
+<tbody>
+<tr><td>action cost / scale / expo</td><td><span class="bad">harmful</span> &mdash; broke every learned rung; reverted</td></tr>
+<tr><td>rung bonus (+20)</td><td>necessary, not sufficient &mdash; the agent almost never earns it</td></tr>
+<tr><td>frontier restarts</td><td>raised one statistic, <span class="bad">wrecked the generalist</span></td></tr>
+<tr><td>self-imitation</td><td>first version was a silent no-op (the actor never read the stored action); fixed version raised cp009 to ~19%, then drove specialist drift</td></tr>
+<tr><td>exploration bursts</td><td>made the two-phase move <em>expressible</em>; crossing rate did not measurably move</td></tr>
+<tr><td>recovery training</td><td>coincided with the best policies produced; did not crack the wall</td></tr>
+<tr><td>per-rung bank quota</td><td><span class="good">real fix</span> &mdash; ended the specialist drift for good</td></tr>
+<tr><td>full 38-rung ladder</td><td><span class="good">real fix</span> &mdash; the upper 25 rungs had received zero episodes in 6.3M steps</td></tr>
+</tbody></table></div>
+<p>Every one of these was generic. Not one targeted the specific move that is blocking progress.</p>
+
+<h2>Why more training will not work</h2>
+<p>Three facts, each established by measurement rather than intuition, that together close the door.</p>
+
+<h3>1. The lift has never happened</h3>
+<p>Self-imitation amplifies successes; there are none to amplify. Bursts make a plant-then-swing expressible; expressible is not found. In roughly 4,900 attempts from cp009, zero completed the vertical section.</p>
+
+<figure>
+<svg viewBox="0 0 640 300" role="img" aria-label="The route from arc 68 to 93: a flat traverse, then a vertical lift. The agent stalls at the base of the lift.">
+  <defs>
+    <marker id="dot" viewBox="0 0 6 6" refX="3" refY="3" markerWidth="6" markerHeight="6"><circle cx="3" cy="3" r="2.6" fill="var(--accent)"/></marker>
+  </defs>
+  <!-- world -> svg: x from -11..2 maps to 40..560, y from -3..9 maps to 270..30 -->
+  <g stroke="var(--rule)" stroke-width="1" fill="none">
+    <line x1="40" y1="270" x2="600" y2="270"/>
+    <line x1="40" y1="30" x2="40" y2="270"/>
+  </g>
+  <g font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--ink-3)">
+    <text x="42" y="286">x &minus;11</text><text x="548" y="286">x +2</text>
+    <text x="8" y="34">y 9</text><text x="8" y="274">y &minus;3</text>
+  </g>
+  <!-- the route, in world coordinates scaled: sx = 40 + (x+11)*40, sy = 270 - (y+3)*20 -->
+  <path d="M 68.4,242.8 L 87.6,248 L 113.6,248 L 140,248 L 166,248 L 192.4,248 L 220,248 L 250,248 L 279.6,248 L 309.2,248 L 339.2,248 L 368.4,248 L 396.4,248.2 L 424.4,248.4 L 452.4,248.6 L 480.4,248.8 L 508.8,249 L 519.2,242.6 L 509.6,229 L 500,215.4 L 490.4,201.8 L 480.8,188.2 L 471.2,174.4 L 461.6,160.8 L 446.8,148 L 431.6,135 L 416.4,122.2 L 401.2,109.2 L 420.8,99.2 L 443.6,89.6 L 466.8,80 L 489.6,70.4 L 500.4,58.8 L 501.6,45.6"
+        fill="none" stroke="var(--ink-2)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- rungs -->
+  <g font-family="IBM Plex Mono, monospace" font-size="11.5" fill="var(--ink-2)">
+    <circle cx="220" cy="248" r="5" fill="var(--surface)" stroke="var(--ink-2)" stroke-width="1.6"/>
+    <text x="205" y="266">cp009</text>
+    <circle cx="464.8" cy="162.4" r="5" fill="var(--surface)" stroke="var(--ink-2)" stroke-width="1.6"/>
+    <text x="478" y="166">cp010</text>
+    <circle cx="484" cy="76" r="5" fill="var(--surface)" stroke="var(--ink-2)" stroke-width="1.6"/>
+    <text x="498" y="80">cp011</text>
+  </g>
+  <!-- where it stops -->
+  <circle cx="508.8" cy="249" r="7" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  <circle cx="508.8" cy="249" r="2.6" fill="var(--accent)"/>
+  <g font-family="IBM Plex Mono, monospace" font-size="11.5" fill="var(--accent)">
+    <text x="330" y="222">agent stops here, every time &rarr;</text>
+  </g>
+  <g font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--ink-3)">
+    <text x="200" y="232">flat traverse, arc 72.6 &rarr; 80</text>
+    <text x="330" y="130">vertical lift, arc 80 &rarr; 90.5</text>
+  </g>
+</svg>
+<figcaption>The authored route through the wall, sampled from the game's own spline. From cp009 the agent runs the flat traverse reliably and stops at the base of the lift &mdash; closest approach to cp010 over six runs: 1.7 to 4.1 world units. cp010's saved pose sits 1.29 units off the line, which is why three reach metrics gave three different answers here.</figcaption>
+</figure>
+
+<h3>2. The reward points away from the move</h3>
+<p>The pogo needs a wind-up &mdash; hammer planted below the pot, weight loaded &mdash; before the pot rises. Under arc reward the wind-up earns nothing or slightly negative; only the completed sequence pays. Dense reward does not help here. It actively pulls the agent off the preparation, which is why sixty hours found the traverse and stopped dead at its end.</p>
+
+<h3>3. The action space is wrong for it, and cannot be changed in place</h3>
+<p>The agent's mean command is <span class="mono">13.1</span> against the operator's <span class="mono">0.38</span> on the same move &mdash; 34&times; &mdash; and the pogo is a precision task. But action-space changes were measured to destroy every learned rung. The learned skills depend on the coarse space; the missing skill needs a fine one. That is a trap, not a tuning problem.</p>
+
+<p>Underneath all of it: one game instance at ~30 steps/s means every experiment costs hours, and the physics is not reproducible &mdash; identical actions from a bit-identical start diverge from the first step &mdash; so telling two policies apart takes 20+ trials.</p>
+
+<h2>What went wrong in the work itself</h2>
+<ul>
+<li><strong>The wall was reported broken, twice.</strong> Both times it was a metric bug (a radius wider than the rung spacing, no ordering), and both times the operator watching the screen caught it. Three metric rewrites later the honest number was zero.</li>
+<li><strong>Most of two days went to instruments.</strong> Buffer persistence, graceful stops, median-of-N evaluation, champion protection, route-projection reach &mdash; all necessary, all now in place, and all time not spent on the agent.</li>
+<li><strong>Generic levers were pulled when the specific move was known on day one.</strong> The operator named it &mdash; plant the hammer, push off, swing high &mdash; before any of the above was built. Nothing was aimed at it.</li>
+</ul>
+
+<h2>What could actually work</h2>
+
+<div class="opt pick">
+<h3>A. Shape the reward toward the wind-up</h3>
+<div class="meta">cost: low &middot; honest RL &middot; the one untried thing aimed at mechanism 2</div>
+<p>Potential-based shaping on the pogo state &mdash; hammer under the pot, weight loaded &mdash; so the preparation finally earns something. Policy-invariant in theory; in practice it gives a gradient where there was none. Encodes knowledge of the technique into the reward, which is legitimate and standard, and a narrative call for the video.</p>
+</div>
+
+<div class="opt">
+<h3>B. A pogo primitive</h3>
+<div class="meta">cost: medium &middot; most likely to work &middot; changes what "the AI learned" means</div>
+<p>A parameterised macro-action &mdash; plant, push, swing &mdash; controlled by two or three numbers the policy chooses. Solves mechanisms 1 and 3 at once. A scripted controller that clears the lift can also generate trajectories to seed the success bank, so the policy still has to internalise the move rather than call a button.</p>
+</div>
+
+<div class="opt">
+<h3>C. Parallel game instances</h3>
+<div class="meta">cost: unknown (Steam) &middot; multiplies everything else &middot; unlocks evolution</div>
+<p>N instances give N&times; the samples for every other approach, and make evolutionary methods viable &mdash; which optimise consistency directly and have no critic to collapse. Whether Steam permits multiple copies is the first thing to find out.</p>
+</div>
+
+<div class="opt">
+<h3>D. The operator's demonstration, for this one move</h3>
+<div class="meta">cost: five minutes of the operator's time &middot; standard (learning from demonstration)</div>
+<p>Demos were ruled out because recording every checkpoint was not feasible. The premise narrowed: one move is the blocker, and the operator has already performed it. A handful of examples of just the lift, captured with the full observation so they can enter the success bank, need nothing else recorded.</p>
+</div>
+
+<div class="verdict">
+<p><strong>Recommendation.</strong> Characterise the lift from the existing demo data, then attack it directly rather than generically: a scripted pogo tested in the game first &mdash; if it clears the lift, its trajectories seed the bank and the shaping in A is calibrated from real successful states. Check C in parallel; if multiple instances run, the whole strategy changes. Keep the full-ladder, per-rung-quota training as the base it all feeds into.</p>
+<p>For the video: the agent climbs 38% of the mountain and stops at the base of the hardest single move on it after sixty hours, with its network genuinely lighting up as it does. That is a story with a wall in it, which is what the best videos in this genre are made of.</p>
+</div>
+</div>

@@ -1,0 +1,367 @@
+<title>Rays and Weights</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* The analysis view: what the agent SEES beside what its network DOES, on
+     the same frame. Deliberately single-theme -- it is an instrument screen
+     and it is filmed, so it must look identical on any host. */
+  :root {
+    --ground:    #05070c;
+    --ink:       #e6ebf5;
+    --ink-dim:   #6f7a90;
+    --ink-faint: #414b5e;
+    --rule:      rgba(150, 168, 205, 0.14);
+    --hot:       240, 166, 75;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    overflow: hidden;
+  }
+
+  header {
+    display: flex; align-items: baseline; gap: 18px;
+    padding: 14px 22px 10px;
+    border-bottom: 1px solid var(--rule);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11.5px; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+  header h1 {
+    margin: 0; font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.16em; color: var(--ink);
+  }
+  header .sep { color: var(--ink-faint); }
+  header .val { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  main { display: grid; grid-template-columns: 42fr 58fr; min-height: 0; }
+  .pane { position: relative; min-width: 0; min-height: 0; }
+  .pane + .pane { border-left: 1px solid var(--rule); }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .tag {
+    position: absolute; top: 14px; left: 16px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-faint); pointer-events: none;
+  }
+
+  footer {
+    display: flex; align-items: center; gap: 16px;
+    padding: 11px 22px 13px; border-top: 1px solid var(--rule);
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px;
+  }
+  button {
+    font: inherit; color: var(--ink); background: transparent;
+    border: 1px solid var(--rule); border-radius: 2px;
+    padding: 5px 13px; cursor: pointer; letter-spacing: 0.08em;
+  }
+  button:hover { border-color: rgba(var(--hot), 0.6); }
+  button:focus-visible { outline: 2px solid rgb(var(--hot)); outline-offset: 2px; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    flex: 1; height: 3px; background: var(--rule);
+    border-radius: 2px; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 11px; height: 11px; border-radius: 50%;
+    background: rgb(var(--hot)); border: none;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: rgb(var(--hot)); border: none;
+  }
+  input[type=range]:focus-visible { outline: 2px solid rgb(var(--hot)); outline-offset: 3px; }
+  .readout { color: var(--ink-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .readout b { color: var(--ink); font-weight: 500; }
+  .hint { color: var(--ink-faint); font-size: 11px; letter-spacing: 0.06em; }
+
+  /* clean capture: chrome away, both canvases only */
+  body.bare header, body.bare footer, body.bare .tag { display: none; }
+  body.bare { grid-template-rows: 1fr; }
+  body.bare .pane + .pane { border-left-color: transparent; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header>
+  <h1>Rays and Weights</h1>
+  <span class="sep">/</span>
+  <span class="val" id="hPolicy">—</span>
+  <span class="sep">/</span>
+  <span>step <span class="val" id="hStep">—</span></span>
+  <span class="sep">/</span>
+  <span>arc <span class="val" id="hArc">—</span></span>
+</header>
+
+<main>
+  <div class="pane">
+    <div class="tag">what it sees — 24 raycasts, 16 body / 8 hammer</div>
+    <canvas id="world"></canvas>
+  </div>
+  <div class="pane">
+    <div class="tag" id="netTag">what it does</div>
+    <canvas id="net"></canvas>
+  </div>
+</main>
+
+<footer>
+  <button id="play">Pause</button>
+  <input type="range" id="scrub" min="0" max="100" value="0" aria-label="Frame">
+  <span class="readout">frame <b id="rFrame">0</b>/<b id="rTotal">0</b></span>
+  <span class="readout">mouse <b id="rAim">0.00, 0.00</b></span>
+  <button id="speed">1&times;</button>
+  <span class="hint">space play &nbsp; &larr;&rarr; step &nbsp; H hide UI</span>
+</footer>
+
+<script id="cap" type="application/json">/*__DATA__*/</script>
+<script>
+(function () {
+  "use strict";
+  const D = JSON.parse(document.getElementById("cap").textContent);
+  const F = D.frames, N = F.length;
+  const NB = D.rays_body, NT = D.rays_tip, RB = D.range_body, RT = D.range_tip;
+  const HOT = "240,166,75", HEAD = "255,214,150", WIRE = "150,168,205",
+        COOL = "170,182,208";
+
+  document.getElementById("hPolicy").textContent = D.policy;
+  document.getElementById("hStep").textContent = D.step.toLocaleString();
+  document.getElementById("rTotal").textContent = N;
+  document.getElementById("netTag").textContent =
+    "what it does — " + (NB + NT) + " ray inputs of " + D.obs_dim +
+    ", " + D.shown + " of " + D.hidden + " hidden shown, 2 outputs";
+
+  function fit(cv) {
+    const r = cv.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = Math.max(1, Math.round(r.width * dpr));
+    cv.height = Math.max(1, Math.round(r.height * dpr));
+    const ctx = cv.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx: ctx, w: r.width, h: r.height };
+  }
+  const world = document.getElementById("world");
+  const net = document.getElementById("net");
+  let Wv = fit(world), Nv = fit(net);
+  addEventListener("resize", () => { Wv = fit(world); Nv = fit(net); layout(); });
+
+  // full detail here on purpose: this view is for reading the numbers, not
+  // for looking clean over a voiceover
+  const IN = NB + NT, HID = D.shown, OUT = 2;
+  const OUT_LABELS = ["mouse x", "mouse y"];
+  let cols = [];
+  function layout() {
+    const w = Nv.w, h = Nv.h, padY = 34;
+    const xs = [Math.min(120, w * 0.13), w * 0.40, w * 0.63, w - 150];
+    const counts = [IN, HID, HID, OUT];
+    const radii = [4.2, 6.2, 6.2, 9.5];
+    cols = counts.map(function (n, c) {
+      const span = h - padY * 2;
+      const step = n > 1 ? span / (n - 1) : 0;
+      const pts = [];
+      for (let i = 0; i < n; i++) {
+        pts.push({ x: xs[c],
+                   y: n > 1 ? padY + i * step : h / 2,
+                   r: radii[c] });
+      }
+      // small columns cluster around the middle instead of spanning the frame
+      if (n <= 3) {
+        const s = Math.min(90, span / 4);
+        for (let i = 0; i < n; i++) pts[i].y = h / 2 - ((n - 1) * s) / 2 + i * s;
+      }
+      return pts;
+    });
+  }
+  layout();
+
+  let frame = 0, playing = true, speed = 1, acc = 0, last = performance.now();
+  const RATE = 30;
+  const btnPlay = document.getElementById("play");
+  const btnSpeed = document.getElementById("speed");
+  const scrub = document.getElementById("scrub");
+  scrub.max = String(N - 1);
+  btnPlay.onclick = function () {
+    playing = !playing; btnPlay.textContent = playing ? "Pause" : "Play";
+  };
+  const SPEEDS = [0.25, 0.5, 1, 2];
+  btnSpeed.onclick = function () {
+    speed = SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length];
+    btnSpeed.innerHTML = speed + "&times;";
+  };
+  scrub.oninput = function () { frame = +scrub.value; draw(); };
+  addEventListener("keydown", function (e) {
+    if (e.code === "Space") { e.preventDefault(); btnPlay.click(); }
+    if (e.code === "ArrowRight") { frame = (frame + 1) % N; draw(); }
+    if (e.code === "ArrowLeft") { frame = (frame + N - 1) % N; draw(); }
+    if (e.key === "h" || e.key === "H") {
+      document.body.classList.toggle("bare");
+      requestAnimationFrame(function () {
+        Wv = fit(world); Nv = fit(net); layout(); draw();
+      });
+    }
+  });
+
+  // ---- left: what the agent sees ----------------------------------------
+  const TRAIL = 140;
+  function drawWorld(f) {
+    const ctx = Wv.ctx, w = Wv.w, h = Wv.h;
+    ctx.clearRect(0, 0, w, h);
+    const SC = Math.min(w, h) / 26;
+    const cx = w / 2, cy = h / 2, px = f.pot[0], py = f.pot[1];
+    const X = function (v) { return cx + (v - px) * SC; };
+    const Y = function (v) { return cy - (v - py) * SC; };
+
+    // terrain draws itself in from remembered ray hits
+    const from = Math.max(0, frame - TRAIL);
+    for (let k = from; k < frame; k++) {
+      const g = F[k], age = (k - from) / Math.max(1, frame - from);
+      ctx.fillStyle = "rgba(" + WIRE + "," + (0.03 + 0.17 * age) + ")";
+      for (let i = 0; i < NB; i++) {
+        const d = g.rays[i];
+        if (d >= 0.999) continue;
+        const a = (2 * Math.PI * i) / NB;
+        ctx.fillRect(X(g.pot[0] + Math.cos(a) * d * RB) - 1,
+                     Y(g.pot[1] + Math.sin(a) * d * RB) - 1, 2, 2);
+      }
+    }
+
+    const tx = px + f.tip[0], ty = py + f.tip[1];
+    function fan(ox, oy, n, range, off) {
+      for (let i = 0; i < n; i++) {
+        const d = f.rays[off + i], a = (2 * Math.PI * i) / n;
+        const ex = ox + Math.cos(a) * d * range, ey = oy + Math.sin(a) * d * range;
+        const hit = d < 0.999;
+        ctx.strokeStyle = hit
+          ? "rgba(" + HEAD + "," + (0.26 + 0.5 * (1 - d)) + ")"
+          : "rgba(" + WIRE + ",0.16)";
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(X(ox), Y(oy)); ctx.lineTo(X(ex), Y(ey)); ctx.stroke();
+        if (hit) {
+          ctx.fillStyle = "rgb(" + HEAD + ")";
+          ctx.beginPath(); ctx.arc(X(ex), Y(ey), 2.1, 0, 7); ctx.fill();
+        }
+      }
+    }
+    fan(px, py, NB, RB, 0);
+    fan(tx, ty, NT, RT, NB);
+
+    ctx.strokeStyle = "rgba(230,235,245,0.85)";
+    ctx.lineWidth = 2.4; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(X(px), Y(py)); ctx.lineTo(X(tx), Y(ty)); ctx.stroke();
+    ctx.fillStyle = "#e6ebf5";
+    ctx.beginPath(); ctx.arc(X(tx), Y(ty), 4.6, 0, 7); ctx.fill();
+
+    const pr = SC * 0.62;
+    ctx.save();
+    ctx.translate(X(px), Y(py));
+    ctx.rotate(-f.rot);
+    ctx.fillStyle = "#0d1220";
+    ctx.strokeStyle = "rgba(230,235,245,0.9)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, pr, Math.PI * 0.08, Math.PI * 0.92, false);
+    ctx.lineTo(-pr * 0.72, -pr * 0.55);
+    ctx.lineTo(pr * 0.72, -pr * 0.55);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    // the invisible cursor the hammer chases -- the agent's actual output
+    const ax = X(px + f.aim[0]), ay = Y(py + f.aim[1]);
+    ctx.strokeStyle = "rgba(" + HOT + ",0.9)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(ax, ay, 5, 0, 7);
+    ctx.moveTo(ax - 9, ay); ctx.lineTo(ax + 9, ay);
+    ctx.moveTo(ax, ay - 9); ctx.lineTo(ax, ay + 9);
+    ctx.stroke();
+  }
+
+  // ---- right: what the network does --------------------------------------
+  function drawNet(f) {
+    const ctx = Nv.ctx, w = Nv.w, h = Nv.h;
+    ctx.clearRect(0, 0, w, h);
+    const A = [
+      f.rays.map(function (d) { return 1 - d; }),
+      f.h1, f.h2,
+      f.act.map(function (v) { return Math.abs(v); })
+    ];
+    for (let pass = 0; pass < 2; pass++) {
+      for (let c = 0; c < 3; c++) {
+        const P = cols[c], Q = cols[c + 1], av = A[c];
+        for (let i = 0; i < P.length; i++) {
+          const s = av[i] || 0;
+          if (pass === 0 ? s > 0.55 : s <= 0.55) continue;
+          ctx.strokeStyle = pass === 0
+            ? "rgba(" + WIRE + ",0.075)"
+            : "rgba(" + HOT + "," + (0.10 + 0.42 * ((s - 0.55) / 0.45)) + ")";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          for (let j = 0; j < Q.length; j++) {
+            ctx.moveTo(P[i].x, P[i].y); ctx.lineTo(Q[j].x, Q[j].y);
+          }
+          ctx.stroke();
+        }
+      }
+    }
+    for (let c = 0; c < cols.length; c++) {
+      for (let i = 0; i < cols[c].length; i++) {
+        const p = cols[c][i];
+        const s = Math.max(0, Math.min(1, A[c][i] || 0));
+        const r = p.r * (1 + 0.28 * s);
+        if (s > 0.06) {
+          ctx.fillStyle = "rgba(" + HOT + "," + (0.13 + 0.72 * s) + ")";
+          ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 7); ctx.fill();
+        }
+        ctx.strokeStyle = s > 0.35
+          ? "rgba(" + HEAD + "," + (0.5 + 0.5 * s) + ")"
+          : "rgba(" + COOL + ",0.62)";
+        ctx.lineWidth = 1.25;
+        ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 7); ctx.stroke();
+      }
+    }
+    ctx.font = '500 13px "IBM Plex Mono", ui-monospace, monospace';
+    ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    for (let i = 0; i < OUT; i++) {
+      const p = cols[3][i], v = f.act[i];
+      ctx.fillStyle = "#e6ebf5";
+      ctx.fillText(OUT_LABELS[i], p.x + 20, p.y - 7);
+      ctx.fillStyle = Math.abs(v) > 0.4 ? "rgb(" + HOT + ")" : "#6f7a90";
+      ctx.fillText((v >= 0 ? "+" : "") + v.toFixed(2), p.x + 20, p.y + 10);
+    }
+    ctx.font = '400 10px "IBM Plex Mono", ui-monospace, monospace';
+    ctx.fillStyle = "#414b5e"; ctx.textAlign = "center";
+    const caps = ["RAYS", "HIDDEN 1", "HIDDEN 2"];
+    for (let c = 0; c < 3; c++) ctx.fillText(caps[c], cols[c][0].x, h - 14);
+    ctx.textAlign = "left";
+  }
+
+  function draw() {
+    const f = F[frame];
+    drawWorld(f); drawNet(f);
+    document.getElementById("rFrame").textContent = frame;
+    document.getElementById("hArc").textContent = f.arc.toFixed(1);
+    document.getElementById("rAim").textContent =
+      f.act[0].toFixed(2) + ", " + f.act[1].toFixed(2);
+    scrub.value = String(frame);
+  }
+  function tick(now) {
+    const dt = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    if (playing) {
+      acc += dt * RATE * speed;
+      while (acc >= 1) { frame = (frame + 1) % N; acc -= 1; }
+      draw();
+    }
+    requestAnimationFrame(tick);
+  }
+  draw();
+  requestAnimationFrame(tick);
+})();
+</script>

@@ -1,0 +1,163 @@
+<title>Net Assembly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+  /* Title card for the network shot: same visual language as the live page,
+     pure black so it luma-keys against the game capture. Single theme by
+     intent -- it is filmed, and must look identical on any host. */
+  :root { --ground: #000000; --ink: #e6ebf5; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    overflow: hidden;
+  }
+  canvas { display: block; width: 100%; height: 100%; }
+  @media (prefers-reduced-motion: reduce) { canvas { opacity: 1; } }
+</style>
+
+<canvas id="c"></canvas>
+
+<script>
+(function () {
+  "use strict";
+
+  // Same shape as the live page, so a cut between them lands on the same
+  // diagram: 8 ray inputs + 2 state, two hidden columns, two outputs.
+  const IN = 10, HID = 10, OUT = 2;
+  const OUT_LABELS = ["mouse x", "mouse y"];
+
+  // ---- timing (seconds) --------------------------------------------------
+  // Columns arrive left to right; each node in a column is staggered, so the
+  // eye follows a wave down the column rather than a block switching on.
+  const T = {
+    colStart:  [0.35, 1.55, 2.55, 3.50],   // when each column begins arriving
+    nodeStep:  [0.075, 0.055, 0.055, 0.22],// stagger between nodes in a column
+    nodeIn:    0.55,                        // fade-in per node
+    edgeStart: [2.15, 3.15, 4.05],          // when each edge bundle begins
+    edgeStep:  0.045,                       // stagger by source node
+    edgeIn:    0.85,                        // how long one bundle takes to draw
+    labelAt:   4.20,
+    hold:      6.60                         // full network held from here
+  };
+
+  const cv = document.getElementById("c");
+  let ctx, W = 0, H = 0, cols = [];
+
+  function fit() {
+    const r = cv.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = Math.max(1, Math.round(r.width * dpr));
+    cv.height = Math.max(1, Math.round(r.height * dpr));
+    ctx = cv.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    W = r.width; H = r.height;
+    layout();
+  }
+
+  function layout() {
+    const gap = Math.min(46, (H - 90) / Math.max(IN, HID));
+    const xs = [W * 0.14, W * 0.38, W * 0.62, W * 0.855];
+    const counts = [IN, HID, HID, OUT];
+    const radii = [10, 12, 12, 16];
+    const spacing = [gap, gap, gap, gap * 2.6];
+    cols = counts.map((n, c) => {
+      const s = spacing[c];
+      const top = H / 2 - ((n - 1) * s) / 2;
+      const pts = [];
+      for (let i = 0; i < n; i++) pts.push({ x: xs[c], y: top + i * s, r: radii[c] });
+      return pts;
+    });
+  }
+  addEventListener("resize", fit);
+  fit();
+
+  // ---- easing ------------------------------------------------------------
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  // gentle overshoot on arrival: the node settles rather than snapping on
+  const outBack = t => { const c = 1.35; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+  const outCubic = t => 1 - Math.pow(1 - t, 3);
+
+  let t0 = performance.now();
+
+  function draw(now) {
+    const t = (now - t0) / 1000;
+    ctx.clearRect(0, 0, W, H);
+
+    // ---- edges, drawn before the nodes so nodes sit on top ---------------
+    for (let c = 0; c < 3; c++) {
+      const A = cols[c], B = cols[c + 1];
+      for (let i = 0; i < A.length; i++) {
+        const p = clamp01((t - (T.edgeStart[c] + i * T.edgeStep)) / T.edgeIn);
+        if (p <= 0) continue;
+        const e = outCubic(p);
+        ctx.strokeStyle = "rgba(150,168,205," + (0.13 * e) + ")";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let j = 0; j < B.length; j++) {
+          // grow the line out from the source toward the target
+          ctx.moveTo(A[i].x, A[i].y);
+          ctx.lineTo(A[i].x + (B[j].x - A[i].x) * e,
+                     A[i].y + (B[j].y - A[i].y) * e);
+        }
+        ctx.stroke();
+      }
+    }
+
+    // ---- nodes ------------------------------------------------------------
+    for (let c = 0; c < cols.length; c++) {
+      for (let i = 0; i < cols[c].length; i++) {
+        const p = clamp01((t - (T.colStart[c] + i * T.nodeStep[c])) / T.nodeIn);
+        if (p <= 0) continue;
+        const q = outBack(p);
+        const node = cols[c][i];
+        const r = node.r * q;
+
+        // the short lead-in stroke on the input column, as in the reference
+        if (c === 0) {
+          ctx.strokeStyle = "rgba(150,168,205," + (0.30 * p) + ")";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(node.x - node.r - 8 - 46 * p, node.y);
+          ctx.lineTo(node.x - node.r - 8, node.y);
+          ctx.stroke();
+        }
+
+        ctx.strokeStyle = "rgba(186,196,222," + (0.30 + 0.62 * p) + ")";
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, Math.max(0.5, r), 0, 7);
+        ctx.stroke();
+      }
+    }
+
+    // ---- output labels ----------------------------------------------------
+    const lp = clamp01((t - T.labelAt) / 0.7);
+    if (lp > 0) {
+      ctx.font = '400 17px "IBM Plex Mono", ui-monospace, monospace';
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "left";
+      ctx.fillStyle = "rgba(230,235,245," + lp + ")";
+      for (let i = 0; i < OUT; i++) {
+        const node = cols[3][i];
+        ctx.fillText(OUT_LABELS[i], node.x + 30 + (1 - outCubic(lp)) * 10, node.y);
+      }
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  // click or space replays the reveal -- no chrome to get in the shot
+  function replay() { t0 = performance.now(); }
+  addEventListener("click", replay);
+  addEventListener("keydown", e => {
+    if (e.code === "Space") { e.preventDefault(); replay(); }
+  });
+
+  requestAnimationFrame(draw);
+})();
+</script>

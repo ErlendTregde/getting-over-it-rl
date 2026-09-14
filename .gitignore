@@ -1,0 +1,51 @@
+# --- Python ---
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.venv/
+
+# --- C# build output ---
+plugin/bin/
+plugin/obj/
+*.user
+
+# --- artifacts: everything the pipeline produces ---
+# Trajectories, policies and logs are all reproducible from data/ plus the
+# plugin. None of it belongs in git: runs_debug alone reached 2.6 GB.
+artifacts/
+*.pt
+*.npz
+
+# --- data ---
+# The ladder and the route ARE tracked: they are plain numbers, the repo cannot
+# run without them, and the ladder is hand-placed and irreplaceable -- git is
+# its backup. Note `data/*` rather than `data/`: git does not descend into an
+# ignored directory, so the negations below would never fire.
+# The ladder IS tracked: those 38 poses are save states made by playing, git is
+# their only backup, and nothing can regenerate them.
+#
+# The route samples are NOT: they densely trace the level path the game's author
+# designed, which is the one thing here with any claim over it. Rebuild with
+#   uv run python tools/dump_route.py
+#
+# Note `data/*` rather than `data/`: git does not descend into an ignored
+# directory, so the negation below would never fire.
+data/*
+!data/checkpoints.route.json
+data/demos/
+
+*.log
+
+# --- attic ---
+# Superseded one-offs, dead map variants, old backups and multi-gigabyte run
+# directories. Kept on disk so nothing is lost, never pushed.
+attic/
+
+# --- generated pages ---
+# tools/buildviz.py bakes captured run data into these; the templates in
+# tools/templates/ are the source.
+docs/net*.html
+montage_cache/

@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>GoiBridge</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <!-- Where the game is installed. Override without editing this file:
+           setx GOI_DIR "C:\Path\To\Getting Over It"
+         or pass it per build:
+           dotnet build -p:GameDir="C:\Path\To\Getting Over It"
+         The DLLs below are referenced from that install and are never copied
+         into the build output or this repository (Private=false). -->
+    <GameDir Condition="'$(GameDir)' == ''">$(GOI_DIR)</GameDir>
+    <Managed>$(GameDir)\GettingOverIt_Data\Managed</Managed>
+    <BepCore>$(GameDir)\BepInEx\core</BepCore>
+  </PropertyGroup>
+
+  <Target Name="CheckGameDir" BeforeTargets="ResolveReferences">
+    <Error Condition="'$(GameDir)' == ''"
+           Text="GOI_DIR is not set. Point it at your Getting Over It folder: setx GOI_DIR &quot;&lt;drive&gt;:\SteamLibrary\steamapps\common\Getting Over It&quot;" />
+    <Error Condition="!Exists('$(Managed)\Assembly-CSharp.dll')"
+           Text="No Assembly-CSharp.dll under $(Managed). Check GOI_DIR points at the game folder (the one containing GettingOverIt.exe)." />
+  </Target>
+
+  <ItemGroup>
+    <Reference Include="BepInEx">
+      <HintPath>$(BepCore)\BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(BepCore)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(Managed)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(Managed)\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(Managed)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.Physics2DModule">
+      <HintPath>$(Managed)\UnityEngine.Physics2DModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(Managed)\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(Managed)\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(Managed)\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>
