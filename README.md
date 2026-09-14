@@ -2,7 +2,7 @@
 
 An agent that climbs the mountain in *Getting Over It with Bennett Foddy*.
 
-https://github.com/USER/REPO/raw/main/docs/demo.mp4
+https://github.com/ErlendTregde/getting-over-it-rl/raw/main/docs/demo.mp4
 
 <sub>If the player above does not appear, watch
 <a href="docs/demo.mp4">docs/demo.mp4</a> directly.</sub>
